@@ -1,0 +1,1 @@
+cd src && python3 -O -m uvicorn api_gateway:app --host 0.0.0.0 --port 8080 --reload

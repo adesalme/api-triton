@@ -1,0 +1,6 @@
+assets/
+.idea/
+__pycache__/
+**/__pycache__/
+*.pyc
+**/*.pyc
