@@ -1,14 +1,14 @@
-import aiohttp.client_exceptions
-
-import tritonclient.http.aio as thc
-import tritonclient.utils as tri_utils
-import numpy as np
 import asyncio
 import enum
 
+import aiohttp.client_exceptions
+import numpy as np
+import tritonclient.http.aio as thc
+import tritonclient.utils as tri_utils
+
+import config
 import util
 from data_models import custom_exceptions as ce
-import config
 
 
 class TritonModelState(enum.Enum):
@@ -17,20 +17,19 @@ class TritonModelState(enum.Enum):
 
 
 class TritonDispatcher(metaclass=util.Singleton):
-    def __init__(self, client=thc.InferenceServerClient, *args, **kwargs):
-        _default_args = {'url': config.TRITON_URL(), 'ssl': False, 'conn_limit': 10, 'conn_timeout': 5}
+    def __init__(self, client=thc.InferenceServerClient, **kwargs):
+        _default_args = {'url': config.triton_url(), 'ssl': False, 'conn_limit': 10, 'conn_timeout': 5}
         self.effective_kargs = _default_args | kwargs
-        self.effective_args = args
         self._client = client
         self._client_instance = None
 
-    def make_client(self):
-        return self._client(*self.effective_args, **self.effective_kargs)
+    def _make_client(self):
+        return self._client(**self.effective_kargs)
 
     @property
     def client(self):
         if self._client_instance is None:
-            self._client_instance = self.make_client()
+            self._client_instance = self._make_client()
         return self._client_instance
 
     def set_client(self, client: thc.InferenceServerClient):

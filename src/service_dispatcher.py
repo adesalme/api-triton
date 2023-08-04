@@ -1,15 +1,15 @@
+import asyncio
 from asyncio import Task
-from typing import Optional, Any
+from typing import Optional
 
-import service_registry as R
+import networkx as nx
+
+import config
+from data_models import custom_exceptions as ce
 from data_models.api_models import APISubmission
 from data_models.internal_models import RequestEndpointType
-from data_models import custom_exceptions as ce
 from data_models.internal_models import ServiceOutputBase
-import networkx as nx
 from services.service_util import ServiceBase
-import asyncio
-import config
 
 ROOT_NODE = 'root'
 
@@ -28,11 +28,11 @@ def recursive_dep_solver(g, service: ServiceBase):
             recursive_dep_solver(g, d)
 
 
-async def resolve_dependencies_and_dispatch(payload):
+async def resolve_dependencies_and_dispatch(payload: APISubmission):
     # Resolve order by building a dependency graph
     g = nx.DiGraph()
     g.add_node(ROOT_NODE)
-    for service in payload.services:
+    for service in payload.services_as_class():
         recursive_dep_solver(g, service)
 
     # Walk the graph from the root
@@ -44,7 +44,9 @@ async def resolve_dependencies_and_dispatch(payload):
         try:
             async with asyncio.TaskGroup() as tg:
                 for node in nodes_to_visit:
-                    tasks[node] = tg.create_task(node.inference(payload, service_results))
+                    # Create service specific input and provide the results of prior services
+                    coro = node.inference(payload.to_service_input(node), service_results)
+                    tasks[node] = tg.create_task(coro)
         except* ce.CustomExceptionBase as eg:
             # ExceptionGroups are horrible, just save first exception to report to caller
             to_raise = eg.exceptions[0]
@@ -69,7 +71,7 @@ async def resolve_dependencies_and_dispatch(payload):
     output = {}
     for service_class, service_output in service_results.items():
         # Only return what was requested
-        if service_class in payload.services:
+        if service_class in payload.services_as_class():
             output[service_class.api_name()] = service_output.api_result
     return output
 

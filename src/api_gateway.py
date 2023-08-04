@@ -1,7 +1,9 @@
+import traceback
 from contextlib import asynccontextmanager
 from pprint import pprint
 
 import fastapi
+import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi import Request
 from fastapi.responses import HTMLResponse
@@ -14,11 +16,10 @@ import service_dispatcher
 import service_registry
 import util
 from data_models.internal_models import RequestEndpointType
-import traceback
 
 
 @asynccontextmanager
-async def lifespan(a: FastAPI):
+async def lifespan(fastapi_app: FastAPI):
     service_registry.load_all()
     pprint(service_registry.get_registry())
     yield
@@ -57,17 +58,17 @@ async def inference_websocket(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive_text()
-            request = api_models.APISubmission.parse_raw(data)
+            request = api_models.APISubmission.model_validate_json(data)
             services_output = await service_dispatcher.dispatch(request, received_from=RequestEndpointType.WEBSOCKET)
-            await websocket.send_text(api_models.APIResponseWebsocket(service_results=services_output).json())
+            await websocket.send_text(api_models.APIResponseWebsocket(service_results=services_output).model_dump_json())
         except WebSocketDisconnect:
             break
         except ce.CustomExceptionBase as e:
-            await websocket.send_text(api_models.APIResponseWebsocket.from_err(e).json())
+            await websocket.send_text(api_models.APIResponseWebsocket.from_err(e).model_dump_json())
         except ValidationError as e:
-            await websocket.send_text(api_models.APIResponseWebsocket.from_err(ce.WebsocketValidationError(e.json())).json())
+            await websocket.send_text(api_models.APIResponseWebsocket.from_err(ce.WebsocketValidationError(e.model_dump_json())).model_dump_json())
         except Exception:
-            await websocket.send_text(api_models.APIResponseWebsocket.from_err(ce.ServiceGenericError()).json())
+            await websocket.send_text(api_models.APIResponseWebsocket.from_err(ce.ServiceGenericError()).model_dump_json())
 
 
 @app.get("/")
@@ -105,3 +106,7 @@ async def get():
     </body>
 </html>
 """)
+
+
+if __name__ == '__main__':
+    uvicorn.run(app, host="0.0.0.0", port=8080)

@@ -1,9 +1,9 @@
 import numpy as np
+import semver
 
 from data_models.internal_models import PreprocessOutput, Service1V1Output
 from service_registry import MetaRegistry
 from services.service_util import ServiceBase
-import semver
 
 
 class Service1V1(ServiceBase, metaclass=MetaRegistry):

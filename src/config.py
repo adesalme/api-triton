@@ -1,23 +1,28 @@
-import os
-import time
-
 from data_models.internal_models import RequestEndpointType
 
 
-def TRITON_URL():
+def triton_url() -> str:
     return "localhost:8000"
 
 
-def HTTP_TIMEOUT():
+def version_separator() -> str:
+    return ':'
+
+
+def per_service_timeout() -> int:
+    return 10
+
+
+def http_timeout() -> int:
     return 25
 
 
-def WEBSOCKET_TIMEOUT():
+def websocket_timeout() -> int:
     return 60
 
 
-def calc_overall_timeout(req_enum: RequestEndpointType):
+def calc_overall_timeout(req_enum: RequestEndpointType) -> int:
     if req_enum == RequestEndpointType.HTTP:
-        return HTTP_TIMEOUT()
+        return http_timeout()
     elif req_enum == RequestEndpointType.WEBSOCKET:
-        return WEBSOCKET_TIMEOUT()
+        return websocket_timeout()

@@ -11,7 +11,7 @@ errors = 0
 try:
     with requests.session() as s:
         for i in range(1, NUM_REQUESTS+1):
-            res = s.post("http://localhost:8080/v1/inference", json={"text": "lorem ipsum", "services": ["Service1:v1.0.0", "Service2:v1.0.0"]})
+            res = s.post("http://localhost:8080/v1/inference", json={"text": "lorem ipsum", "service_requests": ["Service1:v1.0.0"]})
             if res.status_code != 200:
                 errors += 1
             if __debug__:

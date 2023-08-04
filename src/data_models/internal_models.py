@@ -1,10 +1,8 @@
 import enum
-
-import pydantic
-from pydantic import ConfigDict
-from dataclasses import dataclass
 from typing import Any
+
 import numpy as np
+import pydantic
 
 
 class PreprocessOutput(pydantic.BaseModel):
@@ -14,12 +12,18 @@ class PreprocessOutput(pydantic.BaseModel):
 
     inputs: dict[str, np.ndarray]
     outputs: list[str]
-    model_name: str = None
+    # Overwrite the model used for inference. If None, take the model defined by the service class.
+    triton_model_name: str = None
 
 
 class RequestEndpointType(enum.Enum):
     HTTP = "HTTP"
     WEBSOCKET = "WEBSOCKET"
+
+
+class ServiceInput(pydantic.BaseModel):
+    text: str
+    parameters: dict
 
 
 class ServiceOutputBase(pydantic.BaseModel):

@@ -1,10 +1,10 @@
 import numpy as np
+import semver
 
 import services.service1
 from data_models.internal_models import PreprocessOutput, Service1V1Output
 from service_registry import MetaRegistry
 from services.service_util import ServiceBase
-import semver
 
 
 class Service2V1(ServiceBase, metaclass=MetaRegistry):
@@ -40,4 +40,4 @@ class Service2V1(ServiceBase, metaclass=MetaRegistry):
 
     @classmethod
     def dependencies(cls):
-        return [services.service1.Service1V1]
+        return {services.service1.Service1V1}
